@@ -28,11 +28,11 @@
 
 **Purpose**: Initialize the Eve project with correct structure and dependencies
 
-- [ ] T001 Create `package.json` with dependencies: `eve` (latest), `zod` (^3.23), and devDeps: `typescript` (^5.5)
-- [ ] T002 Create `tsconfig.json` with Eve-compatible config: target ES2022, module NodeNext, strict true
+- [ ] T001 Run `npx eve@latest init commit-voice` to scaffold the project — this creates `package.json`, `tsconfig.json`, `agent/` directory with `agent.ts`, `instructions.md`, `tools/`, `skills/`, `channels/`, `schedules/` stubs
+- [ ] T002 Update scaffolded `package.json` to ensure dependencies: `eve` (latest), `zod` (^3.23), and devDeps: `typescript` (^5.5)
 - [ ] T003 Create `.env.example` documenting: `GITHUB_TOKEN`, `GITHUB_USERNAME`, `SLACK_CHANNEL_ID`
-- [ ] T004 Create `agent/agent.ts` with `defineAgent({ model: "openrouter/owl-alpha" })`
-- [ ] T005 Create `agent/instructions.md` with system prompt: identity as social media assistant, standing rules (skip trivial commits, match tone to platform, never leak sensitive info), post style guidelines for X and LinkedIn
+- [ ] T004 Update scaffolded `agent/agent.ts` to set model to `openrouter/owl-alpha`
+- [ ] T005 Update scaffolded `agent/instructions.md` with system prompt: identity as social media assistant, standing rules (skip trivial commits, match tone to platform, never leak sensitive info), post style guidelines for X and LinkedIn
 
 ---
 
@@ -131,7 +131,7 @@
 - [ ] T024 [P] Add `.gitignore` entry for `.env` and `node_modules/`
 - [ ] T025 [P] Add `.claude/` to `.gitignore` to prevent credential leakage (per speckitplus security guidance)
 - [ ] T026 Validate all PHR files are created and have no unresolved placeholders
-- [ ] T027 Run `npx eve@latest init .` to verify the agent directory structure is valid Eve format
+- [ ] T027 Verify the `agent/` directory structure is valid Eve format (check that defineAgent, defineTool, defineSchedule, slackChannel patterns are correct)
 - [ ] T028 [P] Create `README.md` at project root with project overview, setup link to quickstart.md, and architecture summary
 
 ---
