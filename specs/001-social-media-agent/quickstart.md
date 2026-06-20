@@ -11,10 +11,18 @@
 
 ## Setup
 
-### 1. Install dependencies
+### 1. Initialize the Eve agent
 
 ```bash
 cd commit-voice
+npx eve@latest init .
+```
+
+This scaffolds the `agent/` directory with all required files (`agent.ts`, `instructions.md`, `tools/`, `skills/`, `channels/`, `schedules/`).
+
+### 2. Install dependencies
+
+```bash
 npm install
 ```
 
