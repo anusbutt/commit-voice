@@ -110,4 +110,6 @@ Eve's `agent.ts` configures the model. No additional agent context updates neede
 
 4. **Commit filtering**: Pattern-based filtering in the schedule handler (regex match against commit messages for "merge", "bump", "typo", etc.). The LLM also applies judgment for edge cases.
 
-5. **Token budget**: Cap commits at 15 per run. Each commit summary is ~100 tokens, leaving ~3000 tokens for prompt instructions and LLM output. Well within Claude Sonnet's context window.
+5. **Token budget**: Cap commits at 15 per run. Each commit summary is ~100 tokens, leaving ~3000 tokens for prompt instructions and LLM output. Well within owl-alpha's context window.
+
+6. **Skill creation process**: Per project convention, when the Eve agent is initialized, a `skill-creator` skill MUST be placed in `agent/skills/skill-creator.md`. Every subsequent skill (e.g., `post-generation.md`) is built using the process defined in that skill-creator skill. This is a mandatory first task during implementation.

@@ -27,6 +27,10 @@ The orchestrator MUST stop for validation after every phase (constitution, spec,
 ### V. Simplicity and Single Responsibility
 Each tool does one thing. Each schedule handles one workflow. Each skill covers one domain. No multi-purpose tools, no monolithic schedules. If a file would exceed ~100 lines or handle more than one concern, split it. YAGNI applies — do not build features not explicitly in the spec.
 
+## Skill Development Process
+
+When the Eve agent is initialized, a `skill-creator` skill MUST be created as the first skill in `agent/skills/skill-creator.md`. Every subsequent skill (e.g., `post-generation.md`) MUST be built using the process defined in the skill-creator skill. This ensures consistent skill structure and quality across the project.
+
 ## Technology Stack
 
 - **Runtime**: Eve framework (latest) on Vercel
@@ -55,4 +59,4 @@ Every user message MUST generate a Prompt History Record (PHR) in `history/promp
 - Complexity MUST be justified — if a simpler alternative exists that meets the spec, it MUST be chosen.
 - Runtime development guidance lives in CLAUDE.md and is subordinate to this constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-06-21 | **Last Amended**: 2026-06-21
+**Version**: 1.0.1 | **Ratified**: 2026-06-21 | **Last Amended**: 2026-06-21
