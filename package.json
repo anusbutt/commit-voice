@@ -12,6 +12,7 @@
     "deploy": "vercel deploy"
   },
   "dependencies": {
+    "@openrouter/ai-sdk-provider": "^6.0.0-alpha.1",
     "@vercel/connect": "^0.2.6",
     "ai": "^7.0.0-beta.178",
     "eve": "^0.12.0",
