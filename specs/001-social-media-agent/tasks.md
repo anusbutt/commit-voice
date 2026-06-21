@@ -59,8 +59,8 @@
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Create `agent/schedules/daily-posts.ts` using `defineSchedule` with cron `0 18 * * *` (6 PM UTC) in handler mode (`run` function)
-- [ ] T011 [US1] Implement the schedule handler flow in `daily-posts.ts`:
+- [x] T010 [US1] Create `agent/schedules/daily-posts.ts` using `defineSchedule` with cron `0 18 * * *` (6 PM UTC) in handler mode (`run` function)
+- [x] T011 [US1] Implement the schedule handler flow in `daily-posts.ts`:
   - Step 1: Fetch GitHub events via REST API with `GITHUB_TOKEN` auth
   - Step 2: Filter to PushEvents, extract commits with `{ sha, message, repo, date, url }`
   - Step 3: Apply trivial-commit filter (regex: merge, bump, typo, dependency, readme)
@@ -68,8 +68,8 @@
   - Step 5: Build LLM prompt with commit summary + platform-specific instructions + JSON output format
   - Step 6: Send prompt to agent LLM, receive structured JSON `{ twitter: {...}, linkedin: {...} }`
   - Step 7: Format and deliver both posts to Slack via `receive("slack", { message, target, auth })`
-- [ ] T012 [US1] Add error handling in schedule: GitHub API failure → report to Slack; Slack delivery failure → log clearly; rate limiting → report to Slack
-- [ ] T013 [US1] Add `waitUntil()` calls for all async `receive()` operations to keep cron task alive
+- [x] T012 [US1] Add error handling in schedule: GitHub API failure → report to Slack; Slack delivery failure → log clearly; rate limiting → report to Slack
+- [x] T013 [US1] Add `waitUntil()` calls for all async `receive()` operations to keep cron task alive
 
 **Checkpoint**: At this point, triggering the schedule should fetch commits, generate posts, and deliver them to Slack
 
