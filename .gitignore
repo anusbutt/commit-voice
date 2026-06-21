@@ -11,10 +11,11 @@ node_modules/
 dist/
 build/
 
-# IDE
+# IDE and AI agent configs
 .claude/
 .vscode/
 .idea/
+commands/
 
 # OS
 .DS_Store
