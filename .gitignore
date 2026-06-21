@@ -29,3 +29,9 @@ specs/
 history/
 CLAUDE.md
 .vercel
+
+# Speckitplus templates and tooling (internal)
+.specify/
+
+# Eve built-in skill-creator (not user code)
+agent/skills/skill-creator/
