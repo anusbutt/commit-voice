@@ -28,11 +28,11 @@
 
 **Purpose**: Initialize the Eve project with correct structure and dependencies
 
-- [ ] T001 Run `npx eve@latest init commit-voice` to scaffold the project — this creates `package.json`, `tsconfig.json`, `agent/` directory with `agent.ts`, `instructions.md`, `tools/`, `skills/`, `channels/`, `schedules/` stubs
-- [ ] T002 Update scaffolded `package.json` to ensure dependencies: `eve` (latest), `zod` (^3.23), and devDeps: `typescript` (^5.5)
-- [ ] T003 Create `.env.example` documenting: `GITHUB_TOKEN`, `GITHUB_USERNAME`, `SLACK_CHANNEL_ID`
-- [ ] T004 Update scaffolded `agent/agent.ts` to set model to `openrouter/owl-alpha`
-- [ ] T005 Update scaffolded `agent/instructions.md` with system prompt: identity as social media assistant, standing rules (skip trivial commits, match tone to platform, never leak sensitive info), post style guidelines for X and LinkedIn
+- [x] T001 Run `npx eve@latest init commit-voice` to scaffold the project — this creates `package.json`, `tsconfig.json`, `agent/` directory with `agent.ts`, `instructions.md`, `tools/`, `skills/`, `channels/`, `schedules/` stubs
+- [x] T002 Update scaffolded `package.json` to ensure dependencies: `eve` (latest), `zod` (^3.23), and devDeps: `typescript` (^5.5)
+- [x] T003 Create `.env.example` documenting: `GITHUB_TOKEN`, `GITHUB_USERNAME`, `SLACK_CHANNEL_ID`
+- [x] T004 Update scaffolded `agent/agent.ts` to set model to `openrouter/owl-alpha`
+- [x] T005 Update scaffolded `agent/instructions.md` with system prompt: identity as social media assistant, standing rules (skip trivial commits, match tone to platform, never leak sensitive info), post style guidelines for X and LinkedIn
 
 ---
 
@@ -42,10 +42,10 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 [P] Create `agent/channels/slack.ts` with `slackChannel()` configuration using Vercel Connect credentials
-- [ ] T007 [P] Create `agent/tools/fetch-github-commits.ts` — defineTool with Zod schema `{ username, since?, per_page? }`, fetches from GitHub Events API `/users/{username}/events/public`, filters to PushEvents, returns structured commit array `{ sha, message, repo, date, url }`
-- [ ] T008 [P] Create `agent/skills/skill-creator.md` — defines the standard process for creating any skill: YAML frontmatter format, description writing, trigger keywords, body structure with guidelines and examples. This is the FIRST skill and must be built before all others.
-- [ ] T009 [P] Create `agent/skills/post-generation.md` — built using the skill-creator process. Contains: commit classification rules (what to feature vs skip), writing guidelines for X and LinkedIn with concrete examples, tone rules
+- [x] T006 [P] Create `agent/channels/slack.ts` with `slackChannel()` configuration using Vercel Connect credentials
+- [x] T007 [P] Create `agent/tools/fetch-github-commits.ts` — defineTool with Zod schema `{ username, since?, per_page? }`, fetches from GitHub Events API `/users/{username}/events/public`, filters to PushEvents, returns structured commit array `{ sha, message, repo, date, url }`
+- [x] T008 [P] Create `agent/skills/skill-creator.md` — defines the standard process for creating any skill: YAML frontmatter format, description writing, trigger keywords, body structure with guidelines and examples. This is the FIRST skill and must be built before all others.
+- [x] T009 [P] Create `agent/skills/post-generation.md` — built using the skill-creator process. Contains: commit classification rules (what to feature vs skip), writing guidelines for X and LinkedIn with concrete examples, tone rules
 
 **Checkpoint**: Foundation ready — Eve project structure complete, GitHub tool working, Slack channel configured, skill-creator and post-generation skill in place
 
