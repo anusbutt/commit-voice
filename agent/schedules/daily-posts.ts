@@ -102,25 +102,28 @@ export default defineSchedule({
 Recent commits:
 ${commitSummary}
 
-Generate the following and return ONLY valid JSON (no markdown fences, no extra text):
+## X/Twitter Post Requirements
+- Max 280 characters (hard limit — count carefully)
+- First-person, conversational, casual tone
+- Start with what was built, not "I just committed..."
+- Include a specific detail (tech stack, problem solved, metric)
+- Max 2 hashtags
+- Mention the repo name or technology
+- End with a question or call to action to engage readers
+- Example: "Just shipped a Redis caching layer for our API. Response times dropped from 200ms to 15ms. The trick? Write-through with a 5-min TTL. #WebDev #Performance"
 
-{
-  "twitter": {
-    "content": "A casual, first-person X/Twitter post (max 280 chars). Conversational tone. What was built and why it matters. Mention the repo or tech stack.",
-    "hashtags": ["hashtag1", "hashtag2"]
-  },
-  "linkedin": {
-    "content": "A professional LinkedIn post (max 3000 chars). Problem → solution → lesson learned. Professional but authentic. Invite discussion.",
-    "hashtags": ["hashtag1", "hashtag2", "hashtag3"]
-  }
-}
+## LinkedIn Post Requirements
+- Max 3000 characters
+- Professional but authentic tone
+- Structure: Problem → Solution → Lesson Learned
+- Explain the "why" behind technical decisions
+- Share what was learned — admit what was hard
+- 3-5 hashtags
+- Invite discussion with a closing question
+- Example: "This week I tackled a performance bottleneck in our data pipeline. The root cause: N+1 queries in batch processing. Solution: DataLoader pattern with Redis caching. Result: 10x throughput. Key lesson: Always profile before optimizing."
 
-Rules:
-- X post: max 280 characters, first-person, max 2 hashtags
-- LinkedIn post: max 3000 characters, problem/solution framing, 3-5 hashtags
-- Both should reference specific repos and technologies from the commits
-- Be authentic, not hype-y
-- If the commits are about a specific feature or bug fix, focus on that story`;
+Return ONLY valid JSON (no markdown fences, no extra text):
+{"twitter":{"content":"...","hashtags":["..."]},"linkedin":{"content":"...","hashtags":["..."]}}`;
 
     // Step 7: Send prompt to agent LLM and receive generated posts
     let posts: any;

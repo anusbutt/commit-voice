@@ -83,10 +83,10 @@
 
 ### Implementation for User Story 2
 
-- [ ] T014 [P] [US2] Update the LLM prompt in `daily-posts.ts` (Step 5) to include explicit X/Twitter constraints: max 280 chars, first-person conversational tone, 1-2 hashtags max, mention repo or tech stack
-- [ ] T015 [P] [US2] Update the LLM prompt in `daily-posts.ts` (Step 5) to include explicit LinkedIn constraints: max 3000 chars, professional tone, problem/solution framing, 3-5 hashtags, suitable for professional audience
-- [ ] T016 [US2] Update `agent/skills/post-generation.md` with concrete "good" and "bad" example posts for each platform to guide the LLM
-- [ ] T017 [US2] Update `agent/instructions.md` with platform style rules that are always loaded into context
+- [x] T014 [P] [US2] Update the LLM prompt in `daily-posts.ts` (Step 5) to include explicit X/Twitter constraints: max 280 chars, first-person conversational tone, 1-2 hashtags max, mention repo or tech stack
+- [x] T015 [P] [US2] Update the LLM prompt in `daily-posts.ts` (Step 5) to include explicit LinkedIn constraints: max 3000 chars, professional tone, problem/solution framing, 3-5 hashtags, suitable for professional audience
+- [x] T016 [US2] Update `agent/skills/post-generation.md` with concrete "good" and "bad" example posts for each platform to guide the LLM
+- [x] T017 [US2] Update `agent/instructions.md` with platform style rules that are always loaded into context
 
 **Checkpoint**: Generated posts should consistently match platform expectations — verify by reviewing 3+ runs in Slack
 
@@ -100,9 +100,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Implement the Slack message formatting in `daily-posts.ts` (Step 7): header block ("Daily Social Media Posts"), X post section with label, LinkedIn post section with label, context footer with repo list and timestamp
-- [ ] T019 [US3] Configure `SLACK_CHANNEL_ID` as the target in the schedule handler's `receive("slack", { target: { channelId } })` call
-- [ ] T020 [US3] Add `appAuth` parameter to `receive()` calls for proper authentication via Vercel Connect
+- [x] T018 [US3] Implement the Slack message formatting in `daily-posts.ts` (Step 7): header block ("Daily Social Media Posts"), X post section with label, LinkedIn post section with label, context footer with repo list and timestamp
+- [x] T019 [US3] Configure `SLACK_CHANNEL_ID` as the target in the schedule handler's `receive("slack", { target: { channelId } })` call
+- [x] T020 [US3] Add `appAuth` parameter to `receive()` calls for proper authentication via Vercel Connect
 
 **Checkpoint**: Slack channel receives well-formatted messages with both post variants and metadata
 
@@ -116,9 +116,9 @@
 
 ### Implementation for User Story 4
 
-- [ ] T021 [US4] Implement regex-based trivial commit filter in `daily-posts.ts` (Step 3): exclude commits matching `/^merge/i`, `/^bump/i`, `/^fix typo/i`, `/^update dependency/i`, `/^readme/i`, `/^wip/i`
-- [ ] T022 [US4] Add cap of 15 commits per run — if more meaningful commits exist, select the most impactful ones (prioritize: repos with multiple commits, specific/descriptive messages, diverse repos)
-- [ ] T023 [US4] Update `agent/skills/post-generation.md` with the full list of trivial commit patterns and guidance on what constitutes a "meaningful" commit
+- [x] T021 [US4] Implement regex-based trivial commit filter in `daily-posts.ts` (Step 3): exclude commits matching `/^merge/i`, `/^bump/i`, `/^fix typo/i`, `/^update dependency/i`, `/^readme/i`, `/^wip/i`
+- [x] T022 [US4] Add cap of 15 commits per run — if more meaningful commits exist, select the most impactful ones (prioritize: repos with multiple commits, specific/descriptive messages, diverse repos)
+- [x] T023 [US4] Update `agent/skills/post-generation.md` with the full list of trivial commit patterns and guidance on what constitutes a "meaningful" commit
 
 **Checkpoint**: No generated post contains phrases like "fixed typo", "bumped version", or "merged branch"
 

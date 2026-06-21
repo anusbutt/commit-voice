@@ -17,13 +17,16 @@ This skill provides guidance for turning GitHub commits into engaging social med
 - Open source contributions
 - Learning/teaching moments
 
-**Commits to skip:**
-- Typo fixes
-- README updates (unless substantial)
-- Dependency version bumps
-- Merge commits
-- Configuration changes
-- "WIP" or "fix stuff" commits
+**Commits to skip (with regex patterns used by the schedule):**
+- Typo fixes (`/^fix typo/i`)
+- README updates (`/^readme/i`)
+- Dependency version bumps (`/^bump/i`, `/^update dependency/i`)
+- Merge commits (`/^merge/i`)
+- WIP commits (`/^wip/i`, `/^tmp/i`, `/^temp/i`)
+- Single-word vague messages (`/^test$/i`, `/^fix$/i`, `/^update$/i`)
+- Configuration-only changes (no functional impact)
+
+The schedule applies these patterns before sending commits to the LLM. The LLM applies additional judgment for edge cases.
 
 ## Writing Guidelines
 
