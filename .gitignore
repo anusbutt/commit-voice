@@ -23,3 +23,8 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Spec-driven development artifacts (internal/history)
+specs/
+history/
+CLAUDE.md
