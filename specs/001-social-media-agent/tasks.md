@@ -128,11 +128,11 @@
 
 **Purpose**: Final improvements that affect multiple user stories
 
-- [ ] T024 [P] Add `.gitignore` entry for `.env` and `node_modules/`
-- [ ] T025 [P] Add `.claude/` to `.gitignore` to prevent credential leakage (per speckitplus security guidance)
-- [ ] T026 Validate all PHR files are created and have no unresolved placeholders
-- [ ] T027 Verify the `agent/` directory structure is valid Eve format (check that defineAgent, defineTool, defineSchedule, slackChannel patterns are correct)
-- [ ] T028 [P] Create `README.md` at project root with project overview, setup link to quickstart.md, and architecture summary
+- [x] T024 [P] Add `.gitignore` entry for `.env` and `node_modules/`
+- [x] T025 [P] Add `.claude/` to `.gitignore` to prevent credential leakage (per speckitplus security guidance)
+- [x] T026 Validate all PHR files are created and have no unresolved placeholders
+- [x] T027 Verify the `agent/` directory structure is valid Eve format (check that defineAgent, defineTool, defineSchedule, slackChannel patterns are correct)
+- [x] T028 [P] Create `README.md` at project root with project overview, setup link to quickstart.md, and architecture summary
 
 ---
 
