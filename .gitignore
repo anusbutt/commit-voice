@@ -28,3 +28,4 @@ npm-debug.log*
 specs/
 history/
 CLAUDE.md
+.vercel
