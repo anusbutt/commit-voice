@@ -1,6 +1,6 @@
 ---
 name: post-generation
-description: Guidance for writing engaging social media posts about code commits. Use when: generating posts, writing social media content, creating X/Twitter posts, creating LinkedIn posts, turning commits into posts, post writing, content creation from commits.
+description: "Guidance for writing engaging social media posts about code commits. Use when: generating posts, writing social media content, creating X/Twitter posts, creating LinkedIn posts, turning commits into posts, post writing, content creation from commits."
 ---
 
 # Post Generation
