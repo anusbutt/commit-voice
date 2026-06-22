@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import PostCard from "./PostCard";
 
 interface Post {
@@ -48,9 +48,33 @@ export default function DashboardPage() {
     { key: "rejected", label: "Rejected" },
   ];
 
+  async function handleLogout(e: FormEvent) {
+    e.preventDefault();
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
+
   return (
     <main style={{ maxWidth: 800, margin: "0 auto", padding: "2rem", fontFamily: "system-ui" }}>
-      <h1>Commit Voice Dashboard</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1>Commit Voice Dashboard</h1>
+        <form onSubmit={handleLogout}>
+          <button
+            type="submit"
+            style={{
+              background: "transparent",
+              color: "#888",
+              border: "1px solid #333",
+              padding: "6px 14px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "14px",
+            }}
+          >
+            Sign out
+          </button>
+        </form>
+      </div>
 
       <div style={{ display: "flex", gap: "0.5rem", margin: "1.5rem 0" }}>
         {tabs.map((tab) => (
