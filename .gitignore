@@ -10,6 +10,8 @@ node_modules/
 .eve/
 dist/
 build/
+.next/
+.vercel/output/
 
 # IDE and AI agent configs
 .claude/
