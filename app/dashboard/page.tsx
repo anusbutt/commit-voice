@@ -29,11 +29,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPosts = useCallback(async (tab: Tab) => {
+  const fetchPosts = useCallback(async (tab?: Tab) => {
+    const targetTab = tab || activeTab;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/posts?status=${tab}`);
+      const res = await fetch(`/api/posts?status=${targetTab}`);
       if (!res.ok) throw new Error("Failed to fetch posts");
       const data = await res.json();
       setPosts(data);
@@ -42,19 +43,22 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeTab]);
 
   useEffect(() => {
     fetchPosts(activeTab);
   }, [activeTab, fetchPosts]);
 
   // Expose a refresh function so ChatWidget can trigger updates
+  // Always refreshes pending tab (where new posts appear) and switches to it
   useEffect(() => {
-    (window as any).__refreshPosts = () => fetchPosts(activeTab);
+    (window as any).__refreshPosts = () => {
+      setActiveTab("pending");
+    };
     return () => {
       delete (window as any).__refreshPosts;
     };
-  }, [fetchPosts, activeTab]);
+  }, []);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "pending", label: "Pending" },
