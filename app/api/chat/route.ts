@@ -41,10 +41,20 @@ export async function POST(request: NextRequest) {
     const prompt = `${basePrompt}\n\nUser request: ${message}`;
 
     // Step 3: Generate posts via OpenRouter
+    const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+    if (!openrouterApiKey) {
+      return NextResponse.json(
+        { error: "OPENROUTER_API_KEY is not configured" },
+        { status: 500 }
+      );
+    }
+
     let generatedPosts: any;
     try {
       const { text } = await generateText({
-        model: openrouter("anthropic/claude-sonnet-4.6"),
+        model: openrouter("anthropic/claude-sonnet-4.6", {
+          apiKey: openrouterApiKey,
+        }),
         prompt,
       });
 
@@ -59,6 +69,7 @@ export async function POST(request: NextRequest) {
         throw new Error("AI response missing twitter or linkedin content");
       }
     } catch (err: any) {
+      console.error("[/api/chat] Generation error:", err.message || err);
       return NextResponse.json(
         { error: `Post generation failed: ${err.message}` },
         { status: 502 }
