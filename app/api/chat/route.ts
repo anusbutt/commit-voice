@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateText } from "ai";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { createPost } from "@/lib/db";
 import { fetchRecentCommits, buildPostPrompt } from "@/lib/github";
 
@@ -38,9 +36,9 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Build prompt from commits + user message
     const basePrompt = buildPostPrompt(commitResult.commits);
-    const prompt = `${basePrompt}\n\nUser request: ${message}`;
+    const fullPrompt = `${basePrompt}\n\nUser request: ${message}`;
 
-    // Step 3: Generate posts via OpenRouter
+    // Step 3: Generate posts via OpenRouter (direct HTTP call)
     const openrouterApiKey = process.env.OPENROUTER_API_KEY;
     if (!openrouterApiKey) {
       return NextResponse.json(
@@ -49,14 +47,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const openrouterProvider = createOpenRouter({ apiKey: openrouterApiKey });
-
     let generatedPosts: any;
     try {
-      const { text } = await generateText({
-        model: openrouterProvider("openrouter/owl-alpha"),
-        prompt,
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openrouterApiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://commit-voice.vercel.app",
+          "X-Title": "Commit Voice",
+        },
+        body: JSON.stringify({
+          model: "openrouter/owl-alpha",
+          messages: [
+            { role: "user", content: fullPrompt },
+          ],
+        }),
       });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`OpenRouter API ${res.status}: ${errorText}`);
+      }
+
+      const data = await res.json();
+      const text = data.choices?.[0]?.message?.content;
+
+      if (!text) {
+        throw new Error("OpenRouter returned empty response");
+      }
 
       // Parse JSON from response
       const jsonMatch = text.match(/\{[\s\S]*"twitter"[\s\S]*"linkedin"[\s\S]*\}/);
