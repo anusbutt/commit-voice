@@ -70,7 +70,7 @@ export async function fetchRecentCommits(
 
   // Extract commits from PushEvents
   const commits: Commit[] = events
-    .filter((e: any) => e.type === "PushEvent")
+    .filter((e: any) => e.type === "PushEvent" && Array.isArray(e.payload?.commits))
     .flatMap((e: any) =>
       e.payload.commits.map((c: any) => ({
         sha: c.sha.substring(0, 7),
