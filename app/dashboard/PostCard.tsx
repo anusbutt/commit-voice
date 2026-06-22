@@ -10,6 +10,8 @@ interface Post {
   repo_name: string | null;
   commit_sha: string | null;
   created_at: string;
+  posted_at: string | null;
+  error_message: string | null;
 }
 
 export default function PostCard({ post }: { post: Post }) {
@@ -56,6 +58,7 @@ export default function PostCard({ post }: { post: Post }) {
   }
 
   const isDone = status === "done";
+  const isPending = post.status === "pending";
 
   return (
     <div
@@ -68,18 +71,26 @@ export default function PostCard({ post }: { post: Post }) {
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.75rem" }}>
-        <span
-          style={{
-            background: platformColor,
-            color: "#fff",
-            padding: "0.2rem 0.6rem",
-            borderRadius: 4,
-            fontSize: "0.75rem",
-            fontWeight: 600,
-          }}
-        >
-          {platformLabel}
-        </span>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <span
+            style={{
+              background: platformColor,
+              color: "#fff",
+              padding: "0.2rem 0.6rem",
+              borderRadius: 4,
+              fontSize: "0.75rem",
+              fontWeight: 600,
+            }}
+          >
+            {platformLabel}
+          </span>
+          {post.status === "posted" && (
+            <span style={{ color: "#22c55e", fontSize: "0.75rem" }}>✓ Posted</span>
+          )}
+          {post.status === "rejected" && (
+            <span style={{ color: "#ef4444", fontSize: "0.75rem" }}>✗ Rejected</span>
+          )}
+        </div>
         <span style={{ color: "#666", fontSize: "0.8rem" }}>
           {new Date(post.created_at).toLocaleDateString()}
         </span>
@@ -89,26 +100,37 @@ export default function PostCard({ post }: { post: Post }) {
         {post.content}
       </p>
 
-      {post.repo_name && (
-        <p style={{ color: "#666", fontSize: "0.8rem", marginBottom: "1rem" }}>
-          Repo: {post.repo_name} {post.commit_sha && `(${post.commit_sha})`}
+      <div style={{ display: "flex", gap: "1rem", color: "#666", fontSize: "0.8rem" }}>
+        {post.repo_name && <span>Repo: {post.repo_name}</span>}
+        {post.commit_sha && <span>SHA: {post.commit_sha}</span>}
+      </div>
+
+      {post.posted_at && (
+        <p style={{ color: "#22c55e", fontSize: "0.8rem", marginTop: "0.5rem" }}>
+          Posted: {new Date(post.posted_at).toLocaleString()}
+        </p>
+      )}
+
+      {post.error_message && (
+        <p style={{ color: "#ef4444", fontSize: "0.8rem", marginTop: "0.5rem" }}>
+          Error: {post.error_message}
         </p>
       )}
 
       {status === "error" && (
-        <p style={{ color: "#ef4444", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+        <p style={{ color: "#ef4444", fontSize: "0.85rem", marginTop: "0.75rem" }}>
           {message}
         </p>
       )}
 
       {status === "done" && (
-        <p style={{ color: "#22c55e", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+        <p style={{ color: "#22c55e", fontSize: "0.85rem", marginTop: "0.75rem" }}>
           {message}
         </p>
       )}
 
-      {!isDone && (
-        <div style={{ display: "flex", gap: "0.75rem" }}>
+      {isPending && !isDone && (
+        <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
           <button
             onClick={handleApprove}
             disabled={status === "loading"}
