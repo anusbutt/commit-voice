@@ -6,8 +6,9 @@ const AUTH_COOKIE = "commit_voice_auth";
  * Routes that require authentication.
  * /dashboard — the UI
  * /api/posts/* — approve/reject actions
+ * /api/chat — chat-based post generation
  */
-const PROTECTED_PREFIXES = ["/dashboard", "/api/posts"];
+const PROTECTED_PREFIXES = ["/dashboard", "/api/posts", "/api/chat"];
 
 /**
  * Routes that are always public.

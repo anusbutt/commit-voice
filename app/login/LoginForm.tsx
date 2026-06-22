@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function LoginForm() {
   const [password, setPassword] = useState("");
@@ -39,113 +42,74 @@ export default function LoginForm() {
   }
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "#0a0a0a",
-      fontFamily: "system-ui, -apple-system, sans-serif",
-    }}>
-      <div style={{
-        background: "#161616",
-        border: "1px solid #333",
-        borderRadius: "12px",
-        padding: "40px",
-        width: "100%",
-        maxWidth: "400px",
-      }}>
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <div style={{ fontSize: "40px", marginBottom: "12px" }}>🎙️</div>
-          <h1 style={{
-            color: "#ededed",
-            fontSize: "24px",
-            fontWeight: 600,
-            margin: "0 0 8px 0",
-          }}>
-            Commit Voice
-          </h1>
-          <p style={{
-            color: "#888",
-            fontSize: "14px",
-            margin: 0,
-          }}>
-            Enter your dashboard password
-          </p>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "16px" }}>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              autoFocus
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                background: "#0a0a0a",
-                border: "1px solid #333",
-                borderRadius: "8px",
-                color: "#ededed",
-                fontSize: "16px",
-                outline: "none",
-                boxSizing: "border-box",
-                fontFamily: "inherit",
-              }}
-            />
-          </div>
-
-          {error && (
-            <div style={{
-              color: "#ef4444",
-              fontSize: "14px",
-              marginBottom: "16px",
-              padding: "10px 14px",
-              background: "rgba(239,68,68,0.1)",
-              border: "1px solid rgba(239,68,68,0.3)",
-              borderRadius: "6px",
-            }}>
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading || !password}
-            style={{
-              width: "100%",
-              padding: "12px",
-              background: loading || !password ? "#333" : "#3b82f6",
-              color: loading || !password ? "#666" : "#fff",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "16px",
-              fontWeight: 600,
-              cursor: loading || !password ? "not-allowed" : "pointer",
-              fontFamily: "inherit",
-              transition: "all 0.2s",
-            }}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="min-h-screen flex items-center justify-center bg-background px-4"
+    >
+      <Card className="w-full max-w-[400px]">
+        <CardHeader className="text-center pb-2">
+          <motion.div
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+            className="text-5xl mb-4"
           >
-            {loading ? "Checking..." : "Unlock Dashboard"}
-          </button>
-        </form>
+            🎙️
+          </motion.div>
+          <CardTitle className="text-2xl">Commit Voice</CardTitle>
+          <CardDescription>Enter your dashboard password</CardDescription>
+        </CardHeader>
 
-        {/* Footer hint */}
-        <p style={{
-          color: "#555",
-          fontSize: "12px",
-          textAlign: "center",
-          marginTop: "24px",
-          margin: "24px 0 0 0",
-        }}>
-          Lost your password? Check your{" "}
-          <code style={{ color: "#888" }}>DASHBOARD_PASSWORD</code> env var.
-        </p>
-      </div>
-    </div>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                autoFocus
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </motion.div>
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2"
+              >
+                {error}
+              </motion.div>
+            )}
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Button
+                type="submit"
+                disabled={loading || !password}
+                className="w-full"
+              >
+                {loading ? "Checking..." : "Unlock Dashboard"}
+              </Button>
+            </motion.div>
+          </form>
+
+          <p className="text-xs text-muted-foreground text-center mt-6">
+            Lost your password? Check your{" "}
+            <code className="text-foreground/70">DASHBOARD_PASSWORD</code> env var.
+          </p>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
