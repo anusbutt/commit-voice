@@ -1,4 +1,5 @@
 import { defineSchedule } from "eve/schedules";
+import { createPost } from "../../lib/db.js";
 
 // Trivial commit patterns to filter out
 const TRIVIAL_PATTERNS = [
@@ -32,7 +33,6 @@ export default defineSchedule({
     // Step 1: Fetch recent commits from GitHub Events API
     let events: any[];
     try {
-      const since = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
       const response = await fetch(
         `https://api.github.com/users/${username}/events/public?per_page=100`,
         {
@@ -79,13 +79,7 @@ export default defineSchedule({
 
     // Step 4: If no meaningful commits, report and exit
     if (meaningful.length === 0) {
-      waitUntil(
-        receive("slack", {
-          message: `:information_source: *Commit Voice — No Activity Today*\nNo meaningful commits found for \`${username}\` in the last 48 hours.\n\nPush some code and I'll generate your posts tomorrow! :rocket:`,
-          target: { channelId },
-          auth: appAuth,
-        })
-      );
+      console.log(`[daily-posts] No meaningful commits for ${username}`);
       return;
     }
 
@@ -110,7 +104,6 @@ ${commitSummary}
 - Max 2 hashtags
 - Mention the repo name or technology
 - End with a question or call to action to engage readers
-- Example: "Just shipped a Redis caching layer for our API. Response times dropped from 200ms to 15ms. The trick? Write-through with a 5-min TTL. #WebDev #Performance"
 
 ## LinkedIn Post Requirements
 - Max 3000 characters
@@ -120,7 +113,6 @@ ${commitSummary}
 - Share what was learned — admit what was hard
 - 3-5 hashtags
 - Invite discussion with a closing question
-- Example: "This week I tackled a performance bottleneck in our data pipeline. The root cause: N+1 queries in batch processing. Solution: DataLoader pattern with Redis caching. Result: 10x throughput. Key lesson: Always profile before optimizing."
 
 Return ONLY valid JSON (no markdown fences, no extra text):
 {"twitter":{"content":"...","hashtags":["..."]},"linkedin":{"content":"...","hashtags":["..."]}}`;
@@ -146,29 +138,39 @@ Return ONLY valid JSON (no markdown fences, no extra text):
       return;
     }
 
-    // Step 8: Format and deliver to Slack
-    const twitterFull = `${posts.twitter.content}\n\n${posts.twitter.hashtags.map((h: string) => `#${h}`).join(" ")}`;
-    const linkedinFull = `${posts.linkedin.content}\n\n${posts.linkedin.hashtags.map((h: string) => `#${h}`).join(" ")}`;
+    // Step 8: Save posts to Neon DB (pending status)
+    const createdPosts = [];
+    try {
+      const twitterResult = await createPost(
+        posts.twitter.content,
+        "twitter",
+        reposList[0] || null,
+        selected[0]?.sha || null
+      );
+      if (twitterResult.length > 0) createdPosts.push(twitterResult[0]);
 
-    const slackMessage = `:iphone: *Your Daily Social Media Posts*
+      const linkedinResult = await createPost(
+        posts.linkedin.content,
+        "linkedin",
+        reposList[0] || null,
+        selected[0]?.sha || null
+      );
+      if (linkedinResult.length > 0) createdPosts.push(linkedinResult[0]);
 
-*Twitter/X:*
-${twitterFull}
+      console.log(`[daily-posts] Created ${createdPosts.length} pending posts for ${username}`);
+    } catch (err: any) {
+      console.error(`[daily-posts] Failed to save posts to DB: ${err.message}`);
+    }
 
-*LinkedIn:*
-${linkedinFull}
-
----
-_Repos referenced: ${reposList.join(", ")}_
-_Commits analyzed: ${selected.length}_
-_Generated at: ${new Date().toISOString()}_`;
-
-    waitUntil(
-      receive("slack", {
-        message: slackMessage,
-        target: { channelId },
-        auth: appAuth,
-      })
-    );
+    // Step 9: Notify Slack about new pending posts
+    if (createdPosts.length > 0) {
+      waitUntil(
+        receive("slack", {
+          message: `:iphone: *New posts pending review!*\n${createdPosts.length} post(s) generated from ${selected.length} commits.\n\nReview and publish: https://commit-voice.vercel.app/dashboard`,
+          target: { channelId },
+          auth: appAuth,
+        })
+      );
+    }
   },
 });
