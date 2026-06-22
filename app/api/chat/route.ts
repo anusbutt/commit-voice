@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
-import { openrouter } from "@openrouter/ai-sdk-provider";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { createPost } from "@/lib/db";
 import { fetchRecentCommits, buildPostPrompt } from "@/lib/github";
 
@@ -49,12 +49,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const openrouterProvider = createOpenRouter({ apiKey: openrouterApiKey });
+
     let generatedPosts: any;
     try {
       const { text } = await generateText({
-        model: openrouter("anthropic/claude-sonnet-4.6", {
-          apiKey: openrouterApiKey,
-        }),
+        model: openrouterProvider("openrouter/owl-alpha"),
         prompt,
       });
 
