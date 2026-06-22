@@ -58,8 +58,19 @@ export default function ChatWidget() {
 
       const data = await res.json();
 
+      // Handle non-ok responses (including 404 "no commits")
       if (!res.ok) {
-        throw new Error(data.error || "Failed to generate posts");
+        const errorMsg = data.error || "Failed to generate posts";
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: "assistant" as const,
+            content: errorMsg,
+            timestamp: new Date(),
+          },
+        ]);
+        return;
       }
 
       // Add assistant response
@@ -82,9 +93,9 @@ export default function ChatWidget() {
         (window as any).__refreshPosts();
       }
     } catch (err: any) {
-      // Error toast
+      // Network/actual errors only
       toast({
-        title: "Generation failed",
+        title: "Request failed",
         description: err.message,
         variant: "destructive",
       });
@@ -92,7 +103,7 @@ export default function ChatWidget() {
       const errorMessage: ChatMessageType = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `Sorry, something went wrong: ${err.message}`,
+        content: `Error: ${err.message}`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
