@@ -11,6 +11,10 @@ export async function GET(request: NextRequest) {
     const posts = status ? await getPostsByStatus(status) : await getAllPosts();
     return NextResponse.json(posts);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[/api/posts] DB error:", error.message || error);
+    return NextResponse.json(
+      { error: error.message || "Database error. Check DATABASE_URL and run schema.sql" },
+      { status: 500 }
+    );
   }
 }

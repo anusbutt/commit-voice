@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import PostCard from "./PostCard";
+import ThemeToggle from "./ThemeToggle";
+import EmptyState from "./EmptyState";
+import ChatWidget from "./ChatWidget";
 
 interface Post {
   id: number;
@@ -23,24 +29,32 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchPosts() {
-      setLoading(true);
-      setError(null);
-      try {
-        const url = `/api/posts?status=${activeTab}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to fetch posts");
-        const data = await res.json();
-        setPosts(data);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+  const fetchPosts = useCallback(async (tab: Tab) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/posts?status=${tab}`);
+      if (!res.ok) throw new Error("Failed to fetch posts");
+      const data = await res.json();
+      setPosts(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-    fetchPosts();
-  }, [activeTab]);
+  }, []);
+
+  useEffect(() => {
+    fetchPosts(activeTab);
+  }, [activeTab, fetchPosts]);
+
+  // Expose a refresh function so ChatWidget can trigger updates
+  useEffect(() => {
+    (window as any).__refreshPosts = () => fetchPosts(activeTab);
+    return () => {
+      delete (window as any).__refreshPosts;
+    };
+  }, [fetchPosts, activeTab]);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "pending", label: "Pending" },
@@ -48,66 +62,85 @@ export default function DashboardPage() {
     { key: "rejected", label: "Rejected" },
   ];
 
-  async function handleLogout(e: FormEvent) {
-    e.preventDefault();
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/login";
-  }
-
   return (
-    <main style={{ maxWidth: 800, margin: "0 auto", padding: "2rem", fontFamily: "system-ui" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>Commit Voice Dashboard</h1>
-        <form onSubmit={handleLogout}>
-          <button
-            type="submit"
-            style={{
-              background: "transparent",
-              color: "#888",
-              border: "1px solid #333",
-              padding: "6px 14px",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
-          >
-            Sign out
-          </button>
-        </form>
-      </div>
+    <main className="max-w-3xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between mb-8"
+      >
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            🎙️ Commit Voice
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            AI-powered social media posts from your commits
+          </p>
+        </div>
+        <ThemeToggle />
+      </motion.div>
 
-      <div style={{ display: "flex", gap: "0.5rem", margin: "1.5rem 0" }}>
+      {/* Tabs */}
+      <Tabs defaultValue="pending" onValueChange={(v) => setActiveTab(v as Tab)}>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <TabsList className="mb-6">
+            {tabs.map((tab) => (
+              <TabsTrigger key={tab.key} value={tab.key}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </motion.div>
+
         {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            style={{
-              background: activeTab === tab.key ? "#3b82f6" : "#222",
-              color: "#fff",
-              border: "1px solid #333",
-            }}
-          >
-            {tab.label}
-          </button>
+          <TabsContent key={tab.key} value={tab.key}>
+            {loading ? (
+              <div className="flex flex-col gap-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="rounded-xl border border-border p-6 space-y-3">
+                    <div className="flex justify-between">
+                      <Skeleton className="h-5 w-24" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <div className="flex gap-3 mt-4">
+                      <Skeleton className="h-9 flex-1" />
+                      <Skeleton className="h-9 flex-1" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : error ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-12 text-destructive"
+              >
+                <p>{error}</p>
+              </motion.div>
+            ) : posts.length === 0 ? (
+              <EmptyState activeTab={activeTab} />
+            ) : (
+              <AnimatePresence mode="popLayout">
+                <div className="flex flex-col gap-4">
+                  {posts.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                  ))}
+                </div>
+              </AnimatePresence>
+            )}
+          </TabsContent>
         ))}
-      </div>
+      </Tabs>
 
-      {loading && <p style={{ color: "#888" }}>Loading posts...</p>}
-      {error && <p style={{ color: "#ef4444" }}>{error}</p>}
-
-      {!loading && !error && posts.length === 0 && (
-        <div style={{ textAlign: "center", padding: "3rem", color: "#666" }}>
-          <p>No {activeTab} posts.</p>
-        </div>
-      )}
-
-      {!loading && !error && posts.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
-      )}
+      {/* Chat Widget */}
+      <ChatWidget />
     </main>
   );
 }

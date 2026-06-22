@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 
 interface Post {
   id: number;
@@ -19,7 +22,7 @@ export default function PostCard({ post }: { post: Post }) {
   const [message, setMessage] = useState("");
 
   const platformLabel = post.platform === "twitter" ? "X/Twitter" : "LinkedIn";
-  const platformColor = post.platform === "twitter" ? "#1d9bf0" : "#0a66c2";
+  const platformColor = post.platform === "twitter" ? "var(--twitter)" : "var(--linkedin)";
 
   async function handleApprove() {
     setStatus("loading");
@@ -61,100 +64,103 @@ export default function PostCard({ post }: { post: Post }) {
   const isPending = post.status === "pending";
 
   return (
-    <div
-      style={{
-        border: "1px solid #333",
-        borderRadius: 12,
-        padding: "1.5rem",
-        background: "#111",
-        opacity: isDone ? 0.5 : 1,
-      }}
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: 100, transition: { duration: 0.2 } }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      whileHover={{ scale: 1.01 }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.75rem" }}>
-        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-          <span
-            style={{
-              background: platformColor,
-              color: "#fff",
-              padding: "0.2rem 0.6rem",
-              borderRadius: 4,
-              fontSize: "0.75rem",
-              fontWeight: 600,
-            }}
-          >
-            {platformLabel}
-          </span>
-          {post.status === "posted" && (
-            <span style={{ color: "#22c55e", fontSize: "0.75rem" }}>✓ Posted</span>
+      <Card className={isDone ? "opacity-50" : ""}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span
+                className="text-xs font-semibold px-2.5 py-1 rounded-md text-white"
+                style={{ backgroundColor: platformColor }}
+              >
+                {platformLabel}
+              </span>
+              {post.status === "posted" && (
+                <span className="text-xs font-medium" style={{ color: "var(--success)" }}>
+                  ✓ Posted
+                </span>
+              )}
+              {post.status === "rejected" && (
+                <span className="text-xs font-medium text-destructive">
+                  ✗ Rejected
+                </span>
+              )}
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {new Date(post.created_at).toLocaleDateString()}
+            </span>
+          </div>
+        </CardHeader>
+
+        <CardContent className="pb-3">
+          <p className="text-sm whitespace-pre-wrap leading-relaxed text-foreground">
+            {post.content}
+          </p>
+        </CardContent>
+
+        <CardFooter className="flex-col items-start gap-2 pt-0">
+          {/* Meta info */}
+          <div className="flex gap-4 text-xs text-muted-foreground">
+            {post.repo_name && <span>📁 {post.repo_name}</span>}
+            {post.commit_sha && (
+              <span className="font-mono">🔗 {post.commit_sha}</span>
+            )}
+          </div>
+
+          {/* Posted timestamp */}
+          {post.posted_at && (
+            <p className="text-xs" style={{ color: "var(--success)" }}>
+              ✅ Posted: {new Date(post.posted_at).toLocaleString()}
+            </p>
           )}
-          {post.status === "rejected" && (
-            <span style={{ color: "#ef4444", fontSize: "0.75rem" }}>✗ Rejected</span>
+
+          {/* Error message */}
+          {post.error_message && (
+            <p className="text-xs text-destructive">
+              ⚠️ {post.error_message}
+            </p>
           )}
-        </div>
-        <span style={{ color: "#666", fontSize: "0.8rem" }}>
-          {new Date(post.created_at).toLocaleDateString()}
-        </span>
-      </div>
 
-      <p style={{ marginBottom: "1rem", whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
-        {post.content}
-      </p>
+          {/* Action status */}
+          {status === "error" && (
+            <p className="text-sm text-destructive">{message}</p>
+          )}
+          {status === "done" && (
+            <p className="text-sm" style={{ color: "var(--success)" }}>
+              {message}
+            </p>
+          )}
 
-      <div style={{ display: "flex", gap: "1rem", color: "#666", fontSize: "0.8rem" }}>
-        {post.repo_name && <span>Repo: {post.repo_name}</span>}
-        {post.commit_sha && <span>SHA: {post.commit_sha}</span>}
-      </div>
-
-      {post.posted_at && (
-        <p style={{ color: "#22c55e", fontSize: "0.8rem", marginTop: "0.5rem" }}>
-          Posted: {new Date(post.posted_at).toLocaleString()}
-        </p>
-      )}
-
-      {post.error_message && (
-        <p style={{ color: "#ef4444", fontSize: "0.8rem", marginTop: "0.5rem" }}>
-          Error: {post.error_message}
-        </p>
-      )}
-
-      {status === "error" && (
-        <p style={{ color: "#ef4444", fontSize: "0.85rem", marginTop: "0.75rem" }}>
-          {message}
-        </p>
-      )}
-
-      {status === "done" && (
-        <p style={{ color: "#22c55e", fontSize: "0.85rem", marginTop: "0.75rem" }}>
-          {message}
-        </p>
-      )}
-
-      {isPending && !isDone && (
-        <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
-          <button
-            onClick={handleApprove}
-            disabled={status === "loading"}
-            style={{
-              background: "#22c55e",
-              color: "#fff",
-              flex: 1,
-            }}
-          >
-            {status === "loading" ? "Posting..." : "Post"}
-          </button>
-          <button
-            onClick={handleReject}
-            disabled={status === "loading"}
-            style={{
-              background: "#ef4444",
-              color: "#fff",
-              flex: 1,
-            }}
-          >
-            Reject
-          </button>
-        </div>
-      )}
-    </div>
+          {/* Action buttons — only for pending posts */}
+          {isPending && !isDone && (
+            <div className="flex gap-3 w-full mt-2">
+              <Button
+                onClick={handleApprove}
+                disabled={status === "loading"}
+                className="flex-1"
+                style={{ backgroundColor: "var(--success)", color: "#fff" }}
+              >
+                {status === "loading" ? "Posting..." : "Post"}
+              </Button>
+              <Button
+                onClick={handleReject}
+                disabled={status === "loading"}
+                variant="destructive"
+                className="flex-1"
+              >
+                Reject
+              </Button>
+            </div>
+          )}
+        </CardFooter>
+      </Card>
+    </motion.div>
   );
 }
