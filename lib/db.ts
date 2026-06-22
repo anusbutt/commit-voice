@@ -1,11 +1,15 @@
 import { neon, NeonQueryFunction } from "@neondatabase/serverless";
 
-declare global {
-  // eslint-disable-next-line no-var
-  var sql: NeonQueryFunction<false, false> | undefined;
-}
+let sqlInstance: NeonQueryFunction<false, false> | null = null;
 
-const sql = neon(process.env.DATABASE_URL!);
+function getSql(): NeonQueryFunction<false, false> {
+  if (!sqlInstance) {
+    const url = process.env.DATABASE_URL;
+    if (!url) throw new Error("DATABASE_URL environment variable is not set");
+    sqlInstance = neon(url);
+  }
+  return sqlInstance;
+}
 
 export interface Post {
   id: number;
@@ -20,15 +24,18 @@ export interface Post {
 }
 
 export async function getPendingPosts(): Promise<Post[]> {
-  return sql`SELECT * FROM posts WHERE status = 'pending' ORDER BY created_at DESC`;
+  const rows = await getSql()`SELECT * FROM posts WHERE status = 'pending' ORDER BY created_at DESC`;
+  return rows as Post[];
 }
 
 export async function getAllPosts(): Promise<Post[]> {
-  return sql`SELECT * FROM posts ORDER BY created_at DESC`;
+  const rows = await getSql()`SELECT * FROM posts ORDER BY created_at DESC`;
+  return rows as Post[];
 }
 
 export async function getPostsByStatus(status: string): Promise<Post[]> {
-  return sql`SELECT * FROM posts WHERE status = ${status} ORDER BY created_at DESC`;
+  const rows = await getSql()`SELECT * FROM posts WHERE status = ${status} ORDER BY created_at DESC`;
+  return rows as Post[];
 }
 
 export async function createPost(
@@ -37,12 +44,13 @@ export async function createPost(
   repoName: string | null,
   commitSha: string | null
 ): Promise<Post[]> {
-  return sql`
+  const rows = await getSql()`
     INSERT INTO posts (content, platform, repo_name, commit_sha)
     VALUES (${content}, ${platform}, ${repoName}, ${commitSha})
     ON CONFLICT (commit_sha, platform) DO NOTHING
     RETURNING *
   `;
+  return rows as Post[];
 }
 
 export async function updatePostStatus(
@@ -51,14 +59,14 @@ export async function updatePostStatus(
   errorMessage?: string
 ): Promise<Post[]> {
   if (status === "posted") {
-    return sql`UPDATE posts SET status = 'posted', posted_at = NOW() WHERE id = ${id} RETURNING *`;
+    const rows = await getSql()`UPDATE posts SET status = 'posted', posted_at = NOW() WHERE id = ${id} RETURNING *`;
+    return rows as Post[];
   }
-  return sql`UPDATE posts SET status = ${status}, error_message = ${errorMessage || null} WHERE id = ${id} RETURNING *`;
+  const rows = await getSql()`UPDATE posts SET status = ${status}, error_message = ${errorMessage || null} WHERE id = ${id} RETURNING *`;
+  return rows as Post[];
 }
 
 export async function getPostById(id: number): Promise<Post | null> {
-  const rows = await sql`SELECT * FROM posts WHERE id = ${id}`;
-  return rows[0] || null;
+  const rows = await getSql()`SELECT * FROM posts WHERE id = ${id}`;
+  return (rows[0] as Post) || null;
 }
-
-export { sql };

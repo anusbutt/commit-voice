@@ -22,12 +22,12 @@ export async function POST(
 
     let error: string | undefined;
 
-    if (post.platform === "twitter" || post.platform === "both") {
+    if (post.platform === "twitter") {
       const result = await postToTwitter(post.content);
       if (!result.success) error = result.error;
     }
 
-    if (!error && (post.platform === "linkedin" || post.platform === "both")) {
+    if (!error && post.platform === "linkedin") {
       const result = await postToLinkedin(post.content);
       if (!result.success) error = result.error;
     }
