@@ -35,7 +35,7 @@ function isTrivial(message: string): boolean {
 
 /**
  * Fetch recent meaningful commits from GitHub for a given username.
- * Returns up to 15 non-trivial commits from public PushEvents.
+ * First tries the Events API, then falls back to the Repos API.
  */
 export async function fetchRecentCommits(
   username?: string
@@ -50,49 +50,102 @@ export async function fetchRecentCommits(
     throw new Error("GITHUB_TOKEN environment variable is not set");
   }
 
-  // Fetch public events
-  const response = await fetch(
-    `https://api.github.com/users/${ghUsername}/events/public?per_page=100`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    }
-  );
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+    "User-Agent": "Commit-Voice/1.0",
+  };
 
-  if (!response.ok) {
-    throw new Error(`GitHub API ${response.status}: ${response.statusText}`);
-  }
-
-  const events: any[] = await response.json();
-
-  // Extract commits from PushEvents
-  const commits: Commit[] = events
-    .filter((e: any) => e.type === "PushEvent" && Array.isArray(e.payload?.commits))
-    .flatMap((e: any) =>
-      e.payload.commits.map((c: any) => ({
-        sha: c.sha.substring(0, 7),
-        message: c.message.split("\n")[0].trim(),
-        repo: e.repo.name,
-        date: e.created_at,
-        url: `https://github.com/${e.repo.name}/commit/${c.sha}`,
-      }))
+  // Strategy 1: Try Events API (same as V1)
+  try {
+    const eventsResponse = await fetch(
+      `https://api.github.com/users/${ghUsername}/events/public?per_page=100`,
+      { headers }
     );
 
-  // Filter trivial commits
-  const meaningful = commits.filter((c) => !isTrivial(c.message));
+    if (eventsResponse.ok) {
+      const events: any[] = await eventsResponse.json();
 
-  if (meaningful.length === 0) {
-    return { commits: [], repos: [] };
+      const commits: Commit[] = events
+        .filter(
+          (e: any) =>
+            e.type === "PushEvent" && Array.isArray(e.payload?.commits)
+        )
+        .flatMap((e: any) =>
+          e.payload.commits.map((c: any) => ({
+            sha: c.sha.substring(0, 7),
+            message: c.message.split("\n")[0].trim(),
+            repo: e.repo.name,
+            date: e.created_at,
+            url: `https://github.com/${e.repo.name}/commit/${c.sha}`,
+          }))
+        );
+
+      const meaningful = commits.filter((c) => !isTrivial(c.message));
+      if (meaningful.length > 0) {
+        const selected = meaningful.slice(0, 15);
+        const repos = [...new Set(selected.map((c) => c.repo))];
+        return { commits: selected, repos };
+      }
+    }
+  } catch (err: any) {
+    console.warn("[github] Events API failed:", err.message);
   }
 
-  // Cap at 15 for token budget
-  const selected = meaningful.slice(0, 15);
-  const repos = [...new Set(selected.map((c) => c.repo))];
+  // Strategy 2: Fallback to Repos API — list repos and fetch commits from each
+  try {
+    const reposResponse = await fetch(
+      `https://api.github.com/users/${ghUsername}/repos?sort=updated&per_page=10&type=owner`,
+      { headers }
+    );
 
-  return { commits: selected, repos };
+    if (!reposResponse.ok) {
+      throw new Error(
+        `Repos API ${reposResponse.status}: ${reposResponse.statusText}`
+      );
+    }
+
+    const repos: any[] = await reposResponse.json();
+    const allCommits: Commit[] = [];
+
+    // Fetch commits from each repo (up to 5 repos to avoid rate limits)
+    for (const repo of repos.slice(0, 5)) {
+      try {
+        const commitsResponse = await fetch(
+          `https://api.github.com/repos/${ghUsername}/${repo.name}/commits?per_page=10&author=${ghUsername}`,
+          { headers }
+        );
+
+        if (commitsResponse.ok) {
+          const repoCommits: any[] = await commitsResponse.json();
+          for (const rc of repoCommits) {
+            allCommits.push({
+              sha: rc.sha.substring(0, 7),
+              message: rc.commit.message.split("\n")[0].trim(),
+              repo: repo.full_name,
+              date: rc.commit.author?.date || new Date().toISOString(),
+              url: rc.html_url,
+            });
+          }
+        }
+      } catch (err: any) {
+        console.warn(`[github] Failed to fetch commits for ${repo.name}:`, err.message);
+      }
+    }
+
+    const meaningful = allCommits.filter((c) => !isTrivial(c.message));
+    if (meaningful.length > 0) {
+      const selected = meaningful.slice(0, 15);
+      const repoNames = [...new Set(selected.map((c) => c.repo))];
+      return { commits: selected, repos: repoNames };
+    }
+  } catch (err: any) {
+    console.warn("[github] Repos API failed:", err.message);
+  }
+
+  // Nothing found from either strategy
+  return { commits: [], repos: [] };
 }
 
 /**
