@@ -32,8 +32,21 @@ export async function POST(request: NextRequest) {
     }
 
     if (commitResult.commits.length === 0) {
+      const reason = commitResult.emptyReason || "no_events";
+      const messages: Record<string, string> = {
+        no_events:
+          "I couldn't find any recent commits from you. It looks like you haven't pushed anything to GitHub recently. Try pushing some commits and then ask me to generate posts!",
+        all_trivial:
+          "I found some commits, but they're all routine ones (merges, typo fixes, dependency updates). I need more meaningful commits to create good posts. Try making some feature commits with descriptive messages!",
+        no_repos:
+          "I couldn't find any public repositories for your account. Make sure you have public repos with commits, or check that your GitHub token has the right permissions.",
+        api_error:
+          "I'm having trouble reaching GitHub right now. This might be a rate limit or connection issue. Please try again in a minute!",
+        no_meaningful:
+          "I found some commits but none were meaningful enough for posts. Try making commits with more descriptive messages about features or fixes!",
+      };
       return NextResponse.json(
-        { error: "No recent commits found. Push some commits to GitHub first!" },
+        { error: messages[reason] || messages.no_events, emptyReason: reason },
         { status: 404 }
       );
     }
