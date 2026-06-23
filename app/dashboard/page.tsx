@@ -2,6 +2,7 @@
 
 import { useEffect, useState, FormEvent } from "react";
 import PostCard from "./PostCard";
+import ChatWidget from "./ChatWidget";
 
 interface Post {
   id: number;
@@ -108,6 +109,9 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
+
+      {/* Chat Widget */}
+      <ChatWidget />
     </main>
   );
 }
