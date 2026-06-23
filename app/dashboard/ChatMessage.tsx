@@ -11,6 +11,43 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
+/** Render basic markdown: **bold**, \n newlines, • lists */
+function renderMarkdown(text: string): React.ReactNode[] {
+  return text.split("\n").map((line, i) => {
+    // Process **bold** within each line
+    const parts: React.ReactNode[] = [];
+    const regex = /\*\*(.+?)\*\*/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(line.slice(lastIndex, match.index));
+      }
+      parts.push(
+        <strong key={`${i}-${match.index}`} className="font-semibold">
+          {match[1]}
+        </strong>
+      );
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < line.length) {
+      parts.push(line.slice(lastIndex));
+    }
+
+    // If no bold found, just show the line
+    const content = parts.length > 0 ? parts : line;
+
+    return (
+      <span key={i}>
+        {content}
+        {i < text.split("\n").length - 1 && <br />}
+      </span>
+    );
+  });
+}
+
 interface ChatMessageProps {
   message: ChatMessage;
 }
@@ -45,13 +82,13 @@ export default function ChatMessage({ message }: ChatMessageProps) {
       {/* Bubble */}
       <div
         className={cn(
-          "rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
+          "rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
           isUser
             ? "bg-primary text-primary-foreground rounded-br-md"
             : "bg-muted text-foreground rounded-bl-md"
         )}
       >
-        {message.content}
+        {isUser ? message.content : renderMarkdown(message.content)}
       </div>
     </motion.div>
   );
