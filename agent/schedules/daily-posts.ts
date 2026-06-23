@@ -121,7 +121,11 @@ Return ONLY valid JSON (no markdown fences, no extra text):
     let posts: any;
     try {
       const result = await receive("agent", { message: prompt });
-      posts = typeof result === "string" ? JSON.parse(result) : result;
+      // Strip markdown code fences from LLM response before parsing
+      const clean = typeof result === "string"
+        ? result.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+        : result;
+      posts = typeof clean === "string" ? JSON.parse(clean) : clean;
 
       if (!posts?.twitter || !posts?.linkedin) {
         throw new Error("LLM returned incomplete response — missing twitter or linkedin post");
