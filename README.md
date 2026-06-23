@@ -162,6 +162,8 @@ commit-voice/
 
 ```bash
 # 1. Clone and install
+# Note: --legacy-peer-deps is required because Eve framework has strict peer dependency requirements
+# that conflict with some packages. The .npmrc file already includes this setting.
 git clone https://github.com/anusbutt/commit-voice.git
 cd commit-voice
 npm install --legacy-peer-deps
@@ -215,7 +217,7 @@ vercel deploy --prod
 | `TWITTER_ACCESS_TOKEN` | Yes | Twitter App Access Token |
 | `TWITTER_ACCESS_SECRET` | Yes | Twitter App Access Token Secret |
 | `LINKEDIN_PERSON_ID` | Yes | Your LinkedIn Person ID |
-| `LINKEDIN_ACCESS_TOKEN` | Yes | LinkedIn OAuth 2.0 Access Token |
+| `LINKEDIN_ACCESS_TOKEN` | Yes | LinkedIn OAuth 2.0 Access Token (expires every 60 days — regenerate at https://developers.linkedin.com/) |
 
 ## Usage
 

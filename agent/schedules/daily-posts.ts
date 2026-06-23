@@ -42,7 +42,11 @@ export default defineSchedule({
     let posts: any;
     try {
       const llmResult = await receive("agent", { message: prompt });
-      posts = typeof llmResult === "string" ? JSON.parse(llmResult) : llmResult;
+      // Strip markdown code fences from LLM response before parsing
+      const clean = typeof llmResult === "string"
+        ? llmResult.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+        : llmResult;
+      posts = typeof clean === "string" ? JSON.parse(clean) : clean;
 
       if (!posts?.twitter || !posts?.linkedin) {
         throw new Error("LLM returned incomplete response — missing twitter or linkedin post");
