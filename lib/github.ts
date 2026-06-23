@@ -14,6 +14,13 @@ export interface Commit {
 export interface CommitFetchResult {
   commits: Commit[];
   repos: string[];
+  /** Why no commits were found — used by chat widget to give helpful messages */
+  emptyReason?:
+    | "no_events"           // No PushEvents at all
+    | "all_trivial"         // Had commits but all were trivial (merge, fix typo, etc.)
+    | "no_repos"            // User has no public repos
+    | "api_error"           // GitHub API failed (rate limit, auth, etc.)
+    | "no_meaningful";      // Had events but none with meaningful commits
 }
 
 // Trivial commit patterns to filter out
@@ -36,6 +43,7 @@ function isTrivial(message: string): boolean {
 /**
  * Fetch recent meaningful commits from GitHub for a given username.
  * First tries the Events API, then falls back to the Repos API.
+ * Returns emptyReason to help the caller explain what happened.
  */
 export async function fetchRecentCommits(
   username?: string
@@ -58,6 +66,7 @@ export async function fetchRecentCommits(
   };
 
   // Strategy 1: Try Events API (same as V1)
+  let eventsApiOk = false;
   try {
     const eventsResponse = await fetch(
       `https://api.github.com/users/${ghUsername}/events/public?per_page=100`,
@@ -65,31 +74,50 @@ export async function fetchRecentCommits(
     );
 
     if (eventsResponse.ok) {
+      eventsApiOk = true;
       const events: any[] = await eventsResponse.json();
 
-      const commits: Commit[] = events
-        .filter(
-          (e: any) =>
-            e.type === "PushEvent" && Array.isArray(e.payload?.commits)
-        )
-        .flatMap((e: any) =>
-          e.payload.commits.map((c: any) => ({
-            sha: c.sha.substring(0, 7),
-            message: c.message.split("\n")[0].trim(),
-            repo: e.repo.name,
-            date: e.created_at,
-            url: `https://github.com/${e.repo.name}/commit/${c.sha}`,
-          }))
-        );
+      const pushEvents = events.filter(
+        (e: any) => e.type === "PushEvent" && Array.isArray(e.payload?.commits)
+      );
 
-      const meaningful = commits.filter((c) => !isTrivial(c.message));
-      if (meaningful.length > 0) {
-        const selected = meaningful.slice(0, 15);
-        const repos = [...new Set(selected.map((c) => c.repo))];
-        return { commits: selected, repos };
+      if (pushEvents.length === 0) {
+        // No PushEvents at all — user hasn't pushed anything recently
+        return { commits: [], repos: [], emptyReason: "no_events" };
       }
+
+      const allCommits: Commit[] = pushEvents.flatMap((e: any) =>
+        e.payload.commits.map((c: any) => ({
+          sha: c.sha.substring(0, 7),
+          message: c.message.split("\n")[0].trim(),
+          repo: e.repo.name,
+          date: e.created_at,
+          url: `https://github.com/${e.repo.name}/commit/${c.sha}`,
+        }))
+      );
+
+      if (allCommits.length === 0) {
+        return { commits: [], repos: [], emptyReason: "no_events" };
+      }
+
+      const meaningful = allCommits.filter((c) => !isTrivial(c.message));
+
+      if (meaningful.length === 0) {
+        // Had commits but all were trivial
+        return { commits: [], repos: [], emptyReason: "all_trivial" };
+      }
+
+      const selected = meaningful.slice(0, 15);
+      const repos = [...new Set(selected.map((c) => c.repo))];
+      return { commits: selected, repos };
+    }
+
+    // API returned non-ok status
+    if (eventsResponse.status === 401 || eventsResponse.status === 403) {
+      throw new Error(`GitHub API ${eventsResponse.status}: ${eventsResponse.statusText}`);
     }
   } catch (err: any) {
+    if (err.message?.includes("GitHub API")) throw err; // Re-throw auth errors
     console.warn("[github] Events API failed:", err.message);
   }
 
@@ -101,15 +129,20 @@ export async function fetchRecentCommits(
     );
 
     if (!reposResponse.ok) {
-      throw new Error(
-        `Repos API ${reposResponse.status}: ${reposResponse.statusText}`
-      );
+      if (reposResponse.status === 401 || reposResponse.status === 403) {
+        throw new Error(`GitHub API ${reposResponse.status}: ${reposResponse.statusText}`);
+      }
+      return { commits: [], repos: [], emptyReason: "api_error" };
     }
 
     const repos: any[] = await reposResponse.json();
+
+    if (repos.length === 0) {
+      return { commits: [], repos: [], emptyReason: "no_repos" };
+    }
+
     const allCommits: Commit[] = [];
 
-    // Fetch commits from each repo (up to 5 repos to avoid rate limits)
     for (const repo of repos.slice(0, 5)) {
       try {
         const commitsResponse = await fetch(
@@ -134,18 +167,25 @@ export async function fetchRecentCommits(
       }
     }
 
-    const meaningful = allCommits.filter((c) => !isTrivial(c.message));
-    if (meaningful.length > 0) {
-      const selected = meaningful.slice(0, 15);
-      const repoNames = [...new Set(selected.map((c) => c.repo))];
-      return { commits: selected, repos: repoNames };
+    if (allCommits.length === 0) {
+      return { commits: [], repos: [], emptyReason: "no_events" };
     }
+
+    const meaningful = allCommits.filter((c) => !isTrivial(c.message));
+
+    if (meaningful.length === 0) {
+      return { commits: [], repos: [], emptyReason: "all_trivial" };
+    }
+
+    const selected = meaningful.slice(0, 15);
+    const repoNames = [...new Set(selected.map((c) => c.repo))];
+    return { commits: selected, repos: repoNames };
   } catch (err: any) {
+    if (err.message?.includes("GitHub API")) throw err;
     console.warn("[github] Repos API failed:", err.message);
   }
 
-  // Nothing found from either strategy
-  return { commits: [], repos: [] };
+  return { commits: [], repos: [], emptyReason: "api_error" };
 }
 
 /**
