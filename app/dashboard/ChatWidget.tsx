@@ -211,15 +211,28 @@ export default function ChatWidget() {
           body: JSON.stringify({ message: messageText }),
         });
 
-        const data = await res.json();
+        // Parse defensively — on a timeout/crash Vercel returns a plain-text
+        // error page, not JSON, so res.json() would throw an ugly parse error.
+        const raw = await res.text();
+        let data: any = null;
+        try {
+          data = raw ? JSON.parse(raw) : null;
+        } catch {
+          data = null;
+        }
 
-        if (!res.ok) {
+        if (!res.ok || !data) {
+          const friendly =
+            data?.error ||
+            (res.status === 408 || res.status === 504
+              ? "That took a little too long to generate — the model might be busy. Give it another try in a moment! 🙏"
+              : "Hmm, something went wrong on my end. Please try again in a moment! 🙏");
           setMessages((prev) => [
             ...prev,
             {
               id: (Date.now() + 1).toString(),
               role: "assistant" as const,
-              content: data.error || "Something went wrong. Please try again.",
+              content: friendly,
               timestamp: new Date(),
             },
           ]);

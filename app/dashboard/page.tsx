@@ -49,16 +49,18 @@ export default function DashboardPage() {
     fetchPosts(activeTab);
   }, [activeTab, fetchPosts]);
 
-  // Expose a refresh function so ChatWidget can trigger updates
-  // Always refreshes pending tab (where new posts appear) and switches to it
+  // Expose a refresh function so ChatWidget can trigger updates.
+  // Switches to the pending tab AND forces a refetch — even if we're already
+  // on pending (where setActiveTab alone would be a no-op and skip the fetch).
   useEffect(() => {
     (window as any).__refreshPosts = () => {
       setActiveTab("pending");
+      fetchPosts("pending");
     };
     return () => {
       delete (window as any).__refreshPosts;
     };
-  }, []);
+  }, [fetchPosts]);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "pending", label: "Pending" },
@@ -86,7 +88,7 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Tabs */}
-      <Tabs defaultValue="pending" onValueChange={(v) => setActiveTab(v as Tab)}>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

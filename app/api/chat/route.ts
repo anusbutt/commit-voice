@@ -70,7 +70,9 @@ export async function POST(request: NextRequest) {
     let generatedPosts: any;
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 50000); // 50s timeout
+      // Abort well before the 60s function limit so we return a clean JSON
+      // error instead of Vercel's plain-text timeout page.
+      const timeout = setTimeout(() => controller.abort(), 45000); // 45s timeout
 
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -128,10 +130,16 @@ export async function POST(request: NextRequest) {
 
       console.log("[/api/chat] Posts generated successfully");
     } catch (err: any) {
+      const aborted =
+        err?.name === "AbortError" || /abort/i.test(err?.message || "");
       console.error("[/api/chat] Generation error:", err.message || err);
       return NextResponse.json(
-        { error: `Post generation failed: ${err.message}` },
-        { status: 502 }
+        {
+          error: aborted
+            ? "That took a little too long to generate — the model might be busy. Give it another try in a moment! 🙏"
+            : `I couldn't generate posts just now: ${err.message}. Please try again in a moment!`,
+        },
+        { status: aborted ? 504 : 502 }
       );
     }
 
