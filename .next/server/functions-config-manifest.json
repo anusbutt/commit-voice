@@ -1,1 +1,0 @@
-{"version":1,"functions":{"/api/auth/login":{},"/api/chat":{"maxDuration":60},"/api/posts":{},"/api/posts/[id]/reject":{},"/api/posts/[id]/approve":{}}}
