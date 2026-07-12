@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
           "X-Title": "Commit Voice",
         },
         body: JSON.stringify({
-          model: "deepseek/deepseek-v4-flash",
+          model: "google/gemini-2.5-flash-lite",
           messages: [{ role: "user", content: fullPrompt }],
         }),
         signal: controller.signal,
