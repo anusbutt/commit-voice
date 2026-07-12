@@ -6,7 +6,11 @@ function getSql(): NeonQueryFunction<false, false> {
   if (!sqlInstance) {
     const url = process.env.DATABASE_URL;
     if (!url) throw new Error("DATABASE_URL environment variable is not set");
-    sqlInstance = neon(url);
+    // cache: "no-store" is critical — the Neon driver issues queries as
+    // fetch() POSTs, and Next.js/Vercel's Data Cache can replay stale
+    // responses for repeated query+params keys (even across deployments),
+    // resurrecting long-deleted rows. Bypass the fetch cache entirely.
+    sqlInstance = neon(url, { fetchOptions: { cache: "no-store" } });
   }
   return sqlInstance;
 }
