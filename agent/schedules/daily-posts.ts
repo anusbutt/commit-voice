@@ -1,6 +1,6 @@
 import { defineSchedule } from "eve/schedules";
 import { createPost } from "../../lib/db.js";
-import { fetchRecentCommits, buildPostPrompt } from "../../lib/github.js";
+import { fetchLatestCommits, buildPostPrompt } from "../../lib/github.js";
 
 export default defineSchedule({
   cron: "0 18 * * *", // 6:00 PM UTC daily
@@ -16,7 +16,7 @@ export default defineSchedule({
     // Step 1: Fetch recent commits (shared logic)
     let result;
     try {
-      result = await fetchRecentCommits();
+      result = await fetchLatestCommits();
     } catch (err: any) {
       console.error(`[daily-posts] GitHub fetch failed: ${err.message}`);
       waitUntil(

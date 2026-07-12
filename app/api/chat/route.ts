@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPost } from "@/lib/db";
-import { fetchRecentCommits, buildPostPrompt } from "@/lib/github";
+import { fetchLatestCommits, buildPostPrompt } from "@/lib/github";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // Vercel: allow up to 60 seconds
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     // Step 1: Fetch recent commits
     let commitResult;
     try {
-      commitResult = await fetchRecentCommits();
+      commitResult = await fetchLatestCommits();
       console.log("[/api/chat] Commits fetched:", commitResult.commits.length);
     } catch (err: any) {
       console.error("[/api/chat] Commit fetch error:", err.message);
@@ -35,15 +35,15 @@ export async function POST(request: NextRequest) {
       const reason = commitResult.emptyReason || "no_events";
       const messages: Record<string, string> = {
         no_events:
-          "I couldn't find any recent commits from you. It looks like you haven't pushed anything to GitHub recently. Try pushing some commits and then ask me to generate posts!",
+          "Hey! 👋 I looked but couldn't find any commits to work with yet. Push some code to GitHub and I'll happily turn it into posts for you!",
         all_trivial:
-          "I found some commits, but they're all routine ones (merges, typo fixes, dependency updates). I need more meaningful commits to create good posts. Try making some feature commits with descriptive messages!",
+          "I found your commits, but they look like routine housekeeping (merges, typo fixes, dependency bumps). Ship a feature or a fix with a descriptive message and I'll craft something great! 🚀",
         no_repos:
-          "I couldn't find any public repositories for your account. Make sure you have public repos with commits, or check that your GitHub token has the right permissions.",
+          "I couldn't spot any public repos on your account yet. Once you've got a public repo with some commits, come back and I'll get to work! (If you have repos already, your GitHub token might need a quick permissions check.)",
         api_error:
-          "I'm having trouble reaching GitHub right now. This might be a rate limit or connection issue. Please try again in a minute!",
+          "GitHub isn't answering me at the moment — probably a hiccup or a rate limit. 🙏 Give it a minute and ask me again!",
         no_meaningful:
-          "I found some commits but none were meaningful enough for posts. Try making commits with more descriptive messages about features or fixes!",
+          "I found some commits but couldn't tell much of a story from them. Try a commit with a more descriptive message about what you built or fixed, and I'll turn it into posts! ✨",
       };
       return NextResponse.json(
         { error: messages[reason] || messages.no_events, emptyReason: reason },
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
           "X-Title": "Commit Voice",
         },
         body: JSON.stringify({
-          model: "openrouter/owl-alpha",
+          model: "deepseek/deepseek-v4-flash",
           messages: [{ role: "user", content: fullPrompt }],
         }),
         signal: controller.signal,

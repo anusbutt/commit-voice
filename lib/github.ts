@@ -41,11 +41,27 @@ function isTrivial(message: string): boolean {
 }
 
 /**
- * Fetch recent meaningful commits from GitHub for a given username.
- * First tries the Events API, then falls back to the Repos API.
+ * Pick the commits to generate posts from, newest first.
+ * Prefers meaningful commits, but never returns empty when there ARE commits —
+ * if everything looks trivial we still fall back to the latest ones so the
+ * user always gets posts for their latest work.
+ */
+function selectLatestCommits(all: Commit[]): Commit[] {
+  const sorted = [...all].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  const meaningful = sorted.filter((c) => !isTrivial(c.message));
+  const chosen = meaningful.length > 0 ? meaningful : sorted;
+  return chosen.slice(0, 15);
+}
+
+/**
+ * Fetch the latest commits from GitHub for a given username.
+ * First tries the Events API, then falls back to the Repos API (sorted by most
+ * recently pushed) to get the latest commits regardless of event recency.
  * Returns emptyReason to help the caller explain what happened.
  */
-export async function fetchRecentCommits(
+export async function fetchLatestCommits(
   username?: string
 ): Promise<CommitFetchResult> {
   const ghUsername = username || process.env.GITHUB_USERNAME;
@@ -65,8 +81,9 @@ export async function fetchRecentCommits(
     "User-Agent": "Commit-Voice/1.0",
   };
 
-  // Strategy 1: Try Events API (same as V1)
-  let eventsApiOk = false;
+  // Strategy 1: Try Events API — the fast path for the most recent public pushes.
+  // If it yields no commits, we fall through to the Repos API rather than
+  // giving up, so we always surface the user's latest work.
   try {
     const eventsResponse = await fetch(
       `https://api.github.com/users/${ghUsername}/events/public?per_page=100`,
@@ -74,17 +91,11 @@ export async function fetchRecentCommits(
     );
 
     if (eventsResponse.ok) {
-      eventsApiOk = true;
       const events: any[] = await eventsResponse.json();
 
       const pushEvents = events.filter(
         (e: any) => e.type === "PushEvent" && Array.isArray(e.payload?.commits)
       );
-
-      if (pushEvents.length === 0) {
-        // No PushEvents at all — user hasn't pushed anything recently
-        return { commits: [], repos: [], emptyReason: "no_events" };
-      }
 
       const allCommits: Commit[] = pushEvents.flatMap((e: any) =>
         e.payload.commits.map((c: any) => ({
@@ -96,24 +107,17 @@ export async function fetchRecentCommits(
         }))
       );
 
-      if (allCommits.length === 0) {
-        return { commits: [], repos: [], emptyReason: "no_events" };
+      if (allCommits.length > 0) {
+        const selected = selectLatestCommits(allCommits);
+        const repos = [...new Set(selected.map((c) => c.repo))];
+        return { commits: selected, repos };
       }
-
-      const meaningful = allCommits.filter((c) => !isTrivial(c.message));
-
-      if (meaningful.length === 0) {
-        // Had commits but all were trivial
-        return { commits: [], repos: [], emptyReason: "all_trivial" };
-      }
-
-      const selected = meaningful.slice(0, 15);
-      const repos = [...new Set(selected.map((c) => c.repo))];
-      return { commits: selected, repos };
-    }
-
-    // API returned non-ok status
-    if (eventsResponse.status === 401 || eventsResponse.status === 403) {
+      // No push commits in the event feed — fall through to the Repos API.
+    } else if (
+      eventsResponse.status === 401 ||
+      eventsResponse.status === 403
+    ) {
+      // API returned an auth/rate-limit status
       throw new Error(`GitHub API ${eventsResponse.status}: ${eventsResponse.statusText}`);
     }
   } catch (err: any) {
@@ -121,10 +125,11 @@ export async function fetchRecentCommits(
     console.warn("[github] Events API failed:", err.message);
   }
 
-  // Strategy 2: Fallback to Repos API — list repos and fetch commits from each
+  // Strategy 2: Repos API — authoritative source for the latest commits.
+  // Sort by most recently pushed so we always get the user's newest work.
   try {
     const reposResponse = await fetch(
-      `https://api.github.com/users/${ghUsername}/repos?sort=updated&per_page=10&type=owner`,
+      `https://api.github.com/users/${ghUsername}/repos?sort=pushed&per_page=10&type=owner`,
       { headers }
     );
 
@@ -171,13 +176,7 @@ export async function fetchRecentCommits(
       return { commits: [], repos: [], emptyReason: "no_events" };
     }
 
-    const meaningful = allCommits.filter((c) => !isTrivial(c.message));
-
-    if (meaningful.length === 0) {
-      return { commits: [], repos: [], emptyReason: "all_trivial" };
-    }
-
-    const selected = meaningful.slice(0, 15);
+    const selected = selectLatestCommits(allCommits);
     const repoNames = [...new Set(selected.map((c) => c.repo))];
     return { commits: selected, repos: repoNames };
   } catch (err: any) {
@@ -196,9 +195,9 @@ export function buildPostPrompt(commits: Commit[]): string {
     .map((c) => `- \`${c.sha}\` **${c.repo}**: ${c.message}`)
     .join("\n");
 
-  return `You are a social media assistant for a software engineer. Based on their recent GitHub commits below, generate TWO social media posts.
+  return `You are a social media assistant for a software engineer. Based on their latest GitHub commits below, generate TWO social media posts.
 
-Recent commits:
+Latest commits:
 ${commitSummary}
 
 ## X/Twitter Post Requirements

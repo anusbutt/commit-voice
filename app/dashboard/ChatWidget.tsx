@@ -35,8 +35,45 @@ function isGenerationRequest(text: string): boolean {
     "commit",
     "repo",
     "github",
+    "twitter",
+    "content",
+    "caption",
   ];
   return triggers.some((t) => lower.includes(t));
+}
+
+/** Short affirmative replies (e.g. after we offer to generate) — treat as "go generate" */
+function isAffirmation(text: string): boolean {
+  const lower = text.toLowerCase().trim().replace(/[!.?]+$/, "");
+  const affirmations = [
+    "yes",
+    "yeah",
+    "yep",
+    "yup",
+    "sure",
+    "ok",
+    "okay",
+    "k",
+    "go",
+    "go ahead",
+    "go for it",
+    "do it",
+    "let's go",
+    "lets go",
+    "please",
+    "please do",
+    "sounds good",
+  ];
+  return affirmations.includes(lower);
+}
+
+/**
+ * Decide whether a message should reach the LLM. Only post-related requests
+ * (and affirmations to generate) hit the API — everything else is handled
+ * locally with a friendly canned reply.
+ */
+function shouldGenerate(text: string): boolean {
+  return isGenerationRequest(text) || isAffirmation(text);
 }
 
 /** Generate a conversational reply without calling the API */
@@ -93,21 +130,6 @@ function getConversationalReply(text: string): string {
     lower === "cya"
   ) {
     return "Goodbye! 👋 Come back anytime you need social media posts!";
-  }
-
-  // Yes / sure / ok
-  if (
-    lower === "yes" ||
-    lower === "yeah" ||
-    lower === "sure" ||
-    lower === "ok" ||
-    lower === "okay" ||
-    lower === "yep" ||
-    lower === "go ahead" ||
-    lower === "let's go" ||
-    lower === "do it"
-  ) {
-    return "Great! Let me generate some posts from your latest commits. One moment... 🚀";
   }
 
   // No / not now
@@ -181,7 +203,7 @@ export default function ChatWidget() {
 
     try {
       // Check if this is a generation request or just conversation
-      if (isGenerationRequest(messageText)) {
+      if (shouldGenerate(messageText)) {
         // Call the API to generate posts
         const res = await fetch("/api/chat", {
           method: "POST",
